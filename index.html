@@ -3,43 +3,112 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>United States COVID-19 data</title>
+    <title>Peak Analysis of New Reported COVID-19 Cases in the U.S.</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
     <script src="https://rawcdn.githack.com/susielu/d3-annotation/v2.5.1/d3-annotation.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <style type="text/tailwindcss">
-        @layer theme, base, components, utilities;
+    <style type="text/css">
+        body {
+            font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            font-size: 0.9rem;
+            background-color: #f0f2f5;
+            padding: 0;
+            margin-top: 1rem;
+            line-height: 1.2rem;
+        }
 
-        @layer components {
-            body {
-                background-color: #f0f2f5;
-            }
+        text {
+            font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            font-size: 0.7rem;
+        }
 
-            a {
-                color:blue;
-            }
+        .chart-container {
+            display: grid;
+            grid-template-columns: 1fr 10fr;
+            grid-template-rows: 10fr 1fr;
+            grid-column-gap: 0px;
+            grid-row-gap: 0px;
+            margin-left: 0.5rem;
         }
 
         .chart-area {
-            background-color: #ffffff;
-            display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
             color: #a0aec0;
+            grid-area: 1 / 2 / 2 / 3;
+        }
+
+        .axis-label-vertical {
+            font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            font-size: 0.7rem;
+            display: flex;
+            justify-content: center;
+            writing-mode: sideways-lr;
+            color: #a0aec0;
+            grid-area: 1 / 1 / 2 / 2;
+        }
+
+        .axis-label-horizontal {
+            font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            font-size: 0.7rem;
+            text-align: center;
+            color: #a0aec0;
+            grid-area: 2 / 1 / 3 / 3;
+            margin-top: 0.1rem;
+        }
+
+        .container {
+            max-width: 60rem;
+            min-width: 48rem;
+            margin-top: 0;
+            margin-left: auto;
+            margin-right: auto;
+            background-color: #ffffff;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .header {
+            margin-bottom: 1.5rem;
+        }
+
+        .navigation {
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .headline {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #000000;
+            margin-bottom: 0.5rem;
+        }
+
+        .headline-text {
+            font-size: 1.1rem;
+            color: #6b7280;
+        }
+
+        .headline-text-source {
+            font-size: 0.7rem;
+            color: #6b7280;
         }
 
         .grid line {
             stroke: lightgrey;
             stroke-opacity: 0.7;
-            shape-rendering: crispedges; /* Ensures sharp lines */
+            shape-rendering: crispedges;
         }
 
         .bar-cases-highlight {
             fill: rgb(160, 0, 0);
             cursor: crosshair;
         }
+
         .bar-cases {
             fill: rgb(255, 152, 152);
             cursor: crosshair;
@@ -49,20 +118,17 @@
             fill: rgb(0, 0, 0);
             cursor: crosshair;
         }
+
         .bar-deaths {
             fill: rgb(87, 87, 87);
             cursor: crosshair;
-        }
-
-        .x-axis.hide-labels .tick line,
-        .x-axis.hide-labels .tick text {
-            display: none;
         }
 
         .annotation-note-title {
             font-size: 0.4em;
             font-weight: bold;
         }
+
         .annotation-note-label {
             font-size: 0.3em;
             font-weight: medium;
@@ -72,7 +138,8 @@
             fill: rgba(30, 64, 175);
         }
 
-        #slide-2, #slide-3 {
+        #slide-2,
+        #slide-3 {
             display: none;
         }
 
@@ -86,10 +153,174 @@
             fill: rgb(87, 87, 87);
             cursor: grab;
         }
+
+        .navigation-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem;
+            font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            font-size: 1rem;
+            line-height: 1.2rem;
+            font-weight: 500;
+            color: #374151;
+            background-color: #ffffff;
+            border: 1px solid #93c5fd;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .navigation-button:hover {
+            background-color: #f3f4f6;
+        }
+
+        .navigation-pages {
+            display: flex;
+            border: 1px solid #93c5fd;
+            border-radius: 0.3rem;
+            overflow: hidden;
+            margin: 0 0.5rem;
+        }
+
+        .tab-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 0.75rem;
+            min-width: 2.5rem;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #4b5563;
+            background-color: #ffffff;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .tab-button-selected,
+        .tab-button:hover {
+            background-color: #bfdbfe;
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #00246b;
+            margin-bottom: 0.5rem;
+        }
+
+        .container-comment-chart {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: 1fr;
+            grid-column-gap: 2px;
+            grid-row-gap: 2px;
+            background-color: #f1f5ff;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
+
+        .container-comment-chart>*:not(:first-child) {
+            border-left: 1px solid #1e40af;
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .section-comment {
+            grid-area: 1 / 1 / 2 / 2;
+        }
+
+        .section-chart {
+            grid-area: 1 / 2 / 2 / 3;
+        }
+
+        .subsection-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #00246b;
+            margin-bottom: 0.5rem;
+        }
+
+        .list {
+            list-style-type: disc;
+            list-style-position: inside;
+            padding-left: 1.25rem;
+            padding-right: 1.25rem;
+            margin-top: 0.25rem;
+        }
+
+        .alert_black {
+            display: flex;
+            align-items: center;
+            background-color: #000000;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.25rem;
+            margin: 1.25rem;
+            border-radius: 0.5rem;
+        }
+
+        .alert_gray {
+            display: flex;
+            align-items: center;
+            background-color: #6b7280;
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.5rem;
+            margin-top: 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .icon-filled {
+            fill: currentColor;
+            width: 1rem;
+            height: 1rem;
+            margin-right: 0.5rem;
+        }
+
+        .icon {
+            width: 1rem;
+            height: 1rem;
+            margin-right: 0.5rem;
+        }
+
+        .tooltip {
+            opacity: 0;
+            position: absolute;
+            z-index: 10;
+            display: inline-block;
+            padding: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #ffffff;
+            background-color: #1e3a8a;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            pointer-events: none;
+        }
+
+        .timeslider-text {
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+
+        h1,
+        h2,
+        p {
+            margin: 0;
+        }
     </style>
 </head>
 
-<body onload="init()" class="p-4 sm:p-6 md:p-8 lg:p-10">
+<body onload="init()">
 
     <script type="text/javascript">
         var data;
@@ -99,7 +330,7 @@
         var marginLR = 80;
         var marginTB = 20;
         var width = 500 - marginLR * 2;
-        var height = 300 - marginTB * 2;
+        var height = 250 - marginTB * 2;
 
         var sliderStartDate = new Date("2020-01-21");
         var sliderEndDate = new Date("2023-03-23");
@@ -109,8 +340,8 @@
                 var parseDate = d3.timeParse("%Y-%m-%d");
                 var dateFormat = d3.timeFormat("%Y-%m-%d");
                 // TODO before upload
-                data = await d3.csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/heads/master/rolling-averages/us-states.csv", d => {
-                //data = await d3.csv("http://localhost:8000/us-states.csv", d => {
+                //data = await d3.csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/heads/master/rolling-averages/us-states.csv", d => {
+                data = await d3.csv("http://localhost:8000/us-states.csv", d => {
                     return {
                         date: dateFormat(parseDate(d.date)),
                         state: d.state,
@@ -132,10 +363,7 @@
                 totalDeathsAvg: d3.sum(values, d => d.deaths_avg),
             })).sort((a, b) => a.date - b.date);
 
-            console.log(aggregatedDataByDateMap);
-            console.log(aggregatedDataByDate);
-
-            // Tooltip
+            /* ########## Tooltip ########## */
             tooltip = d3.select("#tooltip")
             tooltipFormat = d3.format(".2s");
 
@@ -170,7 +398,7 @@
             var chart1XScale = d3.scaleTime()
                 .domain([minDate, maxDate])
                 .range([0, width]);
-            var chart1xAxis = d3.axisBottom(chart1XScale).ticks(d3.timeMonth.every(6)).tickFormat(d3.timeFormat("Q%q-%Y")); // 
+            var chart1xAxis = d3.axisBottom(chart1XScale).ticks(d3.timeMonth.every(6)).tickFormat(d3.timeFormat("%Y-%m"));
             var chart1xAxisGroup = chart1.append("g")
                 .attr("class", "x-axis axis")
                 .attr("transform", `translate(0,${height})`)
@@ -179,7 +407,7 @@
             // tooltip
             var mousemoveChart1 = function (event, d) {
                 tooltip
-                    .html("United States<br />Date: " + d.date.toLocaleDateString("en-US") + "<br /> Cases: " + tooltipFormat(d.totalCasesAvg))
+                    .html("United States<br />Date: " + d.date.toLocaleDateString("en-US") + "<br /> Cases (7d avg): " + tooltipFormat(d.totalCasesAvg))
                     .style("left", (event.pageX - 50) + "px")
                     .style("top", (event.pageY - 80) + "px");
             }
@@ -221,12 +449,11 @@
             ]
             const makeAnnotationsChart1 = d3.annotation().annotations(annotationsChart1);
 
-            //d3.select(makeAnnotationsChart1).attr("fill", "blue");
-
             chart1.append("g")
                 .attr("class", "annotation-group")
                 .call(makeAnnotationsChart1);
 
+            // chart
             chart1.selectAll(".bar")
                 .data(aggregatedDataByDate)
                 .enter()
@@ -247,7 +474,6 @@
                 .on("mouseleave", mouseleaveChart1);
 
 
-
             /* ########## Chart 2 ########## */
             const numberOfSlices = 5;
             const heightChart2 = 200;
@@ -255,7 +481,6 @@
             const chart2EndDate = new Date("2022-02-28");
 
             const aggregatedDataByStateMap = d3.group(data, d => d.state);
-            console.log(aggregatedDataByStateMap);
             const aggregatedDataByState = Array.from(aggregatedDataByStateMap, ([key, values]) => ({
                 state: key,
                 totalCasesAvg: d3.sum(values, d => {
@@ -300,7 +525,7 @@
             // tooltip
             var mousemoveChart2 = function (event, d) {
                 tooltip
-                    .html(d.state + "<br />Cases: " + tooltipFormat(d.totalCasesAvg) + "<br />Deaths: " + tooltipFormat(d.totalDeaths))
+                    .html(d.state + "<br />Cases (7d avg): " + tooltipFormat(d.totalCasesAvg) + "<br />Deaths: " + tooltipFormat(d.totalDeaths))
                     .style("left", (event.pageX - 50) + "px")
                     .style("top", (event.pageY - 80) + "px");
             }
@@ -310,6 +535,7 @@
                 d3.select(this).attr("class", "bar-cases");
             }
 
+            // chart
             chart2.selectAll(".bar")
                 .data(aggregatedDataByState.slice(0, numberOfSlices))
                 .enter()
@@ -349,7 +575,7 @@
             var chart3XScale = d3.scaleTime()
                 .domain([minDate, maxDate])
                 .range([0, width]);
-            var chart3xAxis = d3.axisBottom(chart3XScale).ticks(d3.timeMonth.every(6)).tickFormat(d3.timeFormat("Q%q-%Y")); // 
+            var chart3xAxis = d3.axisBottom(chart3XScale).ticks(d3.timeMonth.every(6)).tickFormat(d3.timeFormat("%Y-%m"));
             var chart3xAxisGroup = chart3.append("g")
                 .attr("class", "x-axis axis")
                 .attr("transform", `translate(0,${height})`)
@@ -358,7 +584,7 @@
             // tooltip
             var mousemovechart3 = function (event, d) {
                 tooltip
-                    .html("United States<br />Date: " + d.date.toLocaleDateString("en-US") + "<br /> Cases: " + tooltipFormat(d.totalCasesAvg))
+                    .html("United States<br />Date: " + d.date.toLocaleDateString("en-US") + "<br /> Cases (7d avg): " + tooltipFormat(d.totalCasesAvg))
                     .style("left", (event.pageX - 50) + "px")
                     .style("top", (event.pageY - 80) + "px");
             }
@@ -403,6 +629,7 @@
                 .attr("class", "annotation-group")
                 .call(makeAnnotationsChart3);
 
+            // chart
             chart3.selectAll(".bar")
                 .data(aggregatedDataByDate)
                 .enter()
@@ -428,7 +655,6 @@
             const chart4EndDate = new Date("2021-02-28");
             const heightChart4 = 200;
 
-            console.log("CHART 4")
             const aggregatedDataByStateMapChart4 = d3.group(data, d => d.state);
             const aggregatedDataByStateChart4 = Array.from(aggregatedDataByStateMapChart4, ([key, values]) => ({
                 state: key,
@@ -475,7 +701,7 @@
             // tooltip
             var mousemovechart4 = function (event, d) {
                 tooltip
-                    .html(d.state + "<br />Cases: " + tooltipFormat(d.totalCasesAvg) + "<br />Deaths: " + tooltipFormat(d.totalDeaths))
+                    .html(d.state + "<br />Cases (7d avg): " + tooltipFormat(d.totalCasesAvg) + "<br />Deaths: " + tooltipFormat(d.totalDeaths))
                     .style("left", (event.pageX - 50) + "px")
                     .style("top", (event.pageY - 80) + "px");
             }
@@ -485,6 +711,7 @@
                 d3.select(this).attr("class", "bar-cases");
             }
 
+            // chart
             chart4.selectAll(".bar")
                 .data(aggregatedDataByStateChart4.slice(0, numberOfSlicesChart4))
                 .enter()
@@ -523,7 +750,7 @@
             var chart5XScale = d3.scaleTime()
                 .domain([minDate, maxDate])
                 .range([0, width]);
-            var chart5xAxis = d3.axisBottom(chart5XScale).ticks(d3.timeMonth.every(6)).tickFormat(d3.timeFormat("Q%q-%Y")); // 
+            var chart5xAxis = d3.axisBottom(chart5XScale).ticks(d3.timeMonth.every(6)).tickFormat(d3.timeFormat("%Y-%m"));
             var chart5xAxisGroup = chart5.append("g")
                 .attr("class", "x-axis axis")
                 .attr("transform", `translate(0,${height})`)
@@ -537,9 +764,9 @@
 
             var mousemovechart5 = function (event, d) {
                 tooltip
-                    .html("United States<br />Date: " + d.date.toLocaleDateString("en-US") + "<br /> Cases: " + tooltipFormat(d.totalCasesAvg))
+                    .html("United States<br />Date: " + d.date.toLocaleDateString("en-US") + "<br /> Deaths (7d avg): " + tooltipFormat(d.totalDeathsAvg) + "<br /> Case (7d avg): " + tooltipFormat(d.totalCasesAvg))
                     .style("left", (event.pageX - 50) + "px")
-                    .style("top", (event.pageY - 80) + "px");
+                    .style("top", (event.pageY - 100) + "px");
             }
 
             var mouseleavechart5 = function (d) {
@@ -551,7 +778,6 @@
             const annotationschart5 = [
                 {
                     note: {
-                        //label: "~800k cases (7-day average) at peak",
                         title: "2nd major peak"
                     },
                     type: d3.annotationCalloutRect,
@@ -593,11 +819,11 @@
             ]
 
             const makeAnnotationschart5 = d3.annotation().annotations(annotationschart5);
-
             chart5.append("g")
                 .attr("class", "annotation-group")
                 .call(makeAnnotationschart5);
 
+            // chart
             chart5.selectAll(".bar")
                 .data(aggregatedDataByDate)
                 .enter()
@@ -613,7 +839,6 @@
 
             /* ########## Chart 6 ########## */
             createChart6();
-
 
             /* ########## Slider (Slide 3) ########## */
 
@@ -655,11 +880,11 @@
                 .attr("cy", sliderHeight / 2);
 
             const updateStartDateText = (date) => {
-                selectedStartDate.html(`Start Date:<br />${d3.timeFormat("%Y-%m-%d")(date)}`);
+                selectedStartDate.html(`${d3.timeFormat("%Y-%m-%d")(date)}`);
             };
 
             const updateEndDateText = (date) => {
-                selectedEndDate.html(`End Date:<br />${d3.timeFormat("%Y-%m-%d")(date)}`);
+                selectedEndDate.html(`${d3.timeFormat("%Y-%m-%d")(date)}`);
             };
 
             updateStartDateText(sliderStartDate);
@@ -752,7 +977,7 @@
 
             var mousemoveChart6 = function (event, d) {
                 tooltip
-                    .html(d.state + "<br />Cases: " + tooltipFormat(d.totalCasesAvg) + "<br />Deaths: " + tooltipFormat(d.totalDeaths))
+                    .html(d.state + "<br />Cases (7d avg): " + tooltipFormat(d.totalCasesAvg) + "<br />Deaths: " + tooltipFormat(d.totalDeaths))
                     .style("left", (event.pageX - 50) + "px")
                     .style("top", (event.pageY - 80) + "px");
             }
@@ -762,6 +987,7 @@
                 d3.select(this).attr("class", "bar-deaths");
             }
 
+            // chart
             chart6.selectAll(".bar")
                 .data(aggregatedDataByStateChart6.slice(0, numberOfSlicesChart6))
                 .enter()
@@ -781,14 +1007,12 @@
         function selectSlide(id) {
             currentSlide = id;
             document.getElementById("slide-" + id).style.display = "block";
-            document.getElementById("navbutton-" + id).classList.add("bg-blue-200");
-            document.getElementById("navbutton-" + id).classList.add("font-semibold");
+            document.getElementById("navbutton-" + id).classList.add("tab-button-selected");
 
             for (i = 1; i <= 3; i++) {
                 if (i != id) {
                     document.getElementById("slide-" + i).style.display = "none";
-                    document.getElementById("navbutton-" + i).classList.remove("bg-blue-200");
-                    document.getElementById("navbutton-" + i).classList.remove("font-semibold");
+                    document.getElementById("navbutton-" + i).classList.remove("tab-button-selected");
                 }
             }
         }
@@ -811,194 +1035,209 @@
                 selectSlide(2);
             }
         }
-
     </script>
 
-    <div class="max-w-5xl min-w-4xl mx-auto bg-white shadow-lg rounded-lg p-3">
-        <header class="mb-6">
-            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Peaks of New Reported COVID-19 Cases in the
+    <div class="container">
+        <div class="header">
+            <h1 class="headline">Peak Analysis of New Reported COVID-19 Cases in the
                 U.S.</h1>
-            <p class="text-lg text-gray-500">
+            <p class="headline-text">
                 This interactive slide show analyzes the timing and impact (deaths) of the two largest peaks throughout
                 the pandemic.
             </p>
-            <p class="text-xs text-gray-500">Source: <a
+            <p class="headline-text-source">Source: <a
                     href="https://github.com/nytimes/covid-19-data/blob/master/rolling-averages/us-states.csv">NYT</a>,
                 data from January 21, 2020 to March 23, 2023; confirmed and probable cases/deaths</p>
-        </header>
+        </div>
 
-        <!-- Navigation Section -->
-        <nav class="mb-6 flex items-center space-x-2">
-            <button
-                class="px-3 py-1 border border-blue-300 rounded-md text-gray-700 hover:bg-gray-100 flex items-center"
-                onClick="selectPreviousSlide()">
-                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- ########## Navigation Section ########## -->
+        <nav class="navigation">
+            <button class="navigation-button" onClick="selectPreviousSlide()">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5l-7 7 7 7"></path>
                 </svg>
                 BACK
             </button>
-            <div class="flex border border-blue-300 rounded-md overflow-hidden">
-                <button id="navbutton-1"
-                    class="px-3 py-1 bg-blue-200 text-gray-800 font-semibold rounded-l-md hover:bg-gray-100"
-                    onClick="selectSlide(1)">1</button>
-                <button id="navbutton-2" class="px-3 py-1 border-l border-blue-300 text-gray-700 hover:bg-gray-100"
-                    onClick="selectSlide(2)">2</button>
-                <button id="navbutton-3" class="px-3 py-1 border-l border-blue-300 text-gray-700 hover:bg-gray-100"
-                    onClick="selectSlide(3)">3</button>
+            <div class="navigation-pages">
+                <button id="navbutton-1" class="tab-button tab-button-selected" onClick="selectSlide(1)">1</button>
+                <button id="navbutton-2" class="tab-button" onClick="selectSlide(2)">2</button>
+                <button id="navbutton-3" class="tab-button" onClick="selectSlide(3)">3</button>
             </div>
-            <button
-                class="px-3 py-1 border border-blue-300 rounded-md text-gray-700 hover:bg-gray-100 flex items-center"
-                onClick="selectNextSlide()">
+            <button class="navigation-button" onClick="selectNextSlide()">
                 NEXT
-                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg style="width: 1rem; height: 1rem; margin-left:0.25rem;" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                 </svg>
             </button>
-
-
         </nav>
 
         <!-- ########## Slide 1 ########## -->
-        <div id="slide-1" class="flex flex-col">
-            <h1 class="text-xl font-bold text-gray-900 mb-2">The first peak took 4 months and affected California the
+        <div id="slide-1">
+            <h2 class="section-title">The first peak from Oct 2020 to
+                Feb 2021 affected California the
                 most</h2>
-                <div class="flex flex-row divide-x-1 divide-blue-800">
-                    <div class="w-1/2 p-5">
-                        <h2 class="text-l font-bold text-gray-900 mb-2">7-day average of new reported cases</h2>
-                        <p>
-                            The second highest peak took place between October 2020 and
-                            February 2021 with ~226k cases (7-day
-                            average) at peak.
-                        </p>
-                    </div>
 
-                    <div class="w-1/2">
+            <div class="container-comment-chart">
+                <div class="section-comment">
+                    <h2 class="subsection-title">Chart: 7-day average of new reported cases</h2>
+                    <p>
+                        The first peak took place between October 2020 and
+                        February 2021 with ~251k cases (7-day
+                        average) at peak.
+                    </p>
+                </div>
+
+                <div class="section-chart">
+                    <div class="chart-container">
+                        <div class="axis-label-vertical">Number of new cases (7-day average)</div>
                         <div id="chart-3" class="chart-area"></div>
+                        <div class="axis-label-horizontal">Date</div>
                     </div>
                 </div>
+            </div>
 
-                <div class="flex flex-row divide-x-1 divide-blue-800">
-                    <div class="w-1/2 p-5">
-                        <h2 class="text-l font-bold text-gray-900 mb-2">Number of new cases (7-day average) by
-                            state during that peak</h2>
-                        <ul class="list-disc list-inside px-5">
-                            <li>California had by far the most cases (~2.7M) resulting in ~36k deaths.</li>
-                            <li>Texas is second with ~1.8M cases and ~28k deaths.</li>
-                            <li>Followed by Florida, ~1.2M cases and ~17k deaths.</li>
-                        </ul>
-                        <br />
-                        <p>Worth noting: the number of deaths during that peak is much higher compared to the highest
-                            peak ever more than a year later.</p>
-                    </div>
-
-                    <div class="w-1/2 flex flex-col">
+            <div class="container-comment-chart">
+                <div class="section-comment">
+                    <h2 class="subsection-title">Chart: Number of new cases (7-day average) by
+                        state during that peak</h2>
+                    <p>This first peak had a significant number of cases and deaths:</p>
+                    <ul class="list">
+                        <li>California had the most cases (~2.7M) resulting in ~36k deaths.</li>
+                        <li>Texas is second with ~1.8M cases and ~28k deaths.</li>
+                        <li>Followed by Florida, ~1.2M cases and ~17k deaths.</li>
+                    </ul>
+                </div>
+                <div class="section-chart">
+                    <div class="chart-container">
+                        <div class="axis-label-vertical">US State</div>
                         <div id="chart-4" class="chart-area"></div>
+                        <div class="axis-label-horizontal">Number of new cases (7-day average)</div>
                     </div>
                 </div>
+            </div>
         </div>
 
         <!-- ########## Slide 2 ########## -->
-        <div id="slide-2" class="flex flex-col">
-            <h1 class="text-xl font-bold text-gray-900 mb-2">The second peak took 3 months with fewer deaths
-                (absolute/relative) in the top-affected States</h2>
-                <div class="flex flex-row divide-x-1 divide-blue-800">
-                    <div class="w-1/2 p-5">
-                        <h2 class="text-l font-bold text-gray-900 mb-2">7-day average of new reported cases</h2>
-                        <p>
-                            The highest peak took place between December 2021 to February 2022 with ~800k cases (7-day
-                            average) at peak.
-                        </p>
-                    </div>
+        <div id="slide-2">
+            <h2 class="section-title">The second peak between Dec 2021 to Feb 2022 caused fewer deaths</h2>
+            <div class="container-comment-chart">
+                <div class="section-comment">
+                    <h2 class="subsection-title">Chart: 7-day average of new reported cases</h2>
+                    <p>
+                        The second and highest-ever peak took place between December 2021 to February 2022 with ~810k
+                        cases
+                        (7-day
+                        average) at peak.
+                    </p>
+                </div>
 
-                    <div class="w-1/2">
+                <div class="section-chart">
+                    <div class="chart-container">
+                        <div class="axis-label-vertical">Number of new cases (7-day average)</div>
                         <div id="chart-1" class="chart-area"></div>
+                        <div class="axis-label-horizontal">Date</div>
                     </div>
                 </div>
+            </div>
 
-                <div class="flex flex-row divide-x-1 divide-blue-800">
-                    <div class="w-1/2 p-5">
-                        <h2 class="text-l font-bold text-gray-900 mb-2">Number of new cases (7-day average) by
-                            state during that peak</h2>
-                        <ul class="list-disc list-inside px-5">
-                            <li>California had by far the most cases (~3.9M) resulting in ~11k deaths.</li>
-                            <li>Texas is second with ~2.2M cases but the same number of deaths like California (~11k).
-                            </li>
-                            <li>Followed by New York, ~2.2M cases and ~9.7k deaths.</li>
-                        </ul>
-                    </div>
+            <div class="container-comment-chart">
+                <div class="section-comment">
+                    <h2 class="subsection-title">Chart: Number of new cases (7-day average) by
+                        state during that peak</h2>
+                    <p>While the number of cases reached its absolute peak, the number of deaths was lower in absolute
+                        and relative terms:</p>
+                    <ul class="list">
+                        <li>California had by far the most cases (~3.9M) resulting in ~11k deaths.</li>
+                        <li>Texas is second with ~2.2M cases but the same number of deaths like California
+                            (~11k).
+                        </li>
+                        <li>Followed by New York, ~2.2M cases and ~9.7k deaths.</li>
+                    </ul>
+                </div>
 
-                    <div class="w-1/2 flex flex-col">
+                <div class="section-chart">
+                    <div class="chart-container">
+                        <div class="axis-label-vertical">US State</div>
                         <div id="chart-2" class="chart-area"></div>
+                        <div class="axis-label-horizontal">Number of new cases (7-day average)</div>
                     </div>
                 </div>
+            </div>
         </div>
 
         <!-- ########## Slide 3 ########## -->
-        <div id="slide-3" class="flex flex-col">
-            <h1 class="text-xl font-bold text-gray-900 mb-2">The highest number of deaths occurred from during the first
+        <div id="slide-3">
+            <h2 class="section-title">The highest number of deaths occurred during the first
                 peak, led by California
-                </h2>
-                <div class="flex flex-row divide-x-1 divide-blue-800">
-                    <div class="w-1/2 p-5">
-                        <h2 class="text-l font-bold text-gray-900 mb-2">7-day average of new reported deaths</h2>
-                        <p>
-                            It can be observed that the the highest number of deaths (3.3k on a 7-day average) occurred
-                            during the first peak, more closely to the beginnig of the pandemic. This is despite the
-                            fact that the number of cases (~226k on a 7-day average) was much lower compared to the
-                            chronologically second peak where cases reached their absolute peak of ~800k.
-                        </p>
-                    </div>
+            </h2>
+            <div class="container-comment-chart">
+                <div class="section-comment">
+                    <h2 class="subsection-title">Chart: 7-day average of new reported deaths</h2>
+                    <p>
+                        It can be observed that the highest number of deaths (3.3k on a 7-day average)
+                        occurred
+                        during the first peak, more closely to the beginning of the pandemic.</p>
+                    <br />
+                    <p>This is despite the
+                        fact that the number of cases (~251k on a 7-day average) was much lower compared to the
+                        chronologically second peak where cases reached their absolute peak of ~810k.
+                    </p>
+                </div>
 
-                    <div class="w-1/2">
+                <div class="section-chart">
+                    <div class="chart-container">
+                        <div class="axis-label-vertical">7-day average of new reported deaths</div>
                         <div id="chart-5" class="chart-area"></div>
+                        <div class="axis-label-horizontal">Date</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container-comment-chart">
+                <div class="section-comment">
+                    <h2 class="subsection-title">Chart: Number of deaths
+                        by state during the pandemic</h2>
+                    <p>
+                        California (100k), Texas (95k), and Florida (87k) had the highest number of deaths between
+                        January 21, 2020 and March 23, 2023.
+                    </p>
+                    <div class="alert_black" role="alert">
+                        <svg class="icon-filled" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path
+                                d="M12.432 0c1.34 0 2.01.912 2.01 1.957 0 1.305-1.164 2.512-2.679 2.512-1.269 0-2.009-.75-1.974-1.99C9.789 1.436 10.67 0 12.432 0zM8.309 20c-1.058 0-1.833-.652-1.093-3.524l1.214-5.092c.211-.814.246-1.141 0-1.141-.317 0-1.689.562-2.502 1.117l-.528-.88c2.572-2.186 5.531-3.467 6.801-3.467 1.057 0 1.233 1.273.705 3.23l-1.391 5.352c-.246.945-.141 1.271.106 1.271.317 0 1.357-.392 2.379-1.207l.6.814C12.098 19.02 9.365 20 8.309 20z" />
+                        </svg>
+                        <p>Use the slider to show the number of deaths within a timeframe.</p>
+                    </div>
+                    <div class="timeslider-text">
+                        <div>Selected time frame: <span id="selectedStartDate"></span> to <span
+                                id="selectedEndDate"></span></div>
+                        <div id="slide3-slider"></div>
                     </div>
                 </div>
 
-                <div class="flex flex-row divide-x-1 divide-blue-800">
-                    <div class="w-1/2 p-5">
-                        <h2 class="text-l font-bold text-gray-900 mb-2">Highest number of deaths
-                            by state during the pandemic</h2>
-                        <p>
-                            California (100k), Texas (95k), and Florida (87k) had the highest number of deaths.
-                        </p>
-                        <div class="flex items-center bg-black text-white text-xs font-medium px-2 py-2 mt-5 rounded-lg"
-                            role="alert">
-                            <svg class="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 20 20">
-                                <path
-                                    d="M12.432 0c1.34 0 2.01.912 2.01 1.957 0 1.305-1.164 2.512-2.679 2.512-1.269 0-2.009-.75-1.974-1.99C9.789 1.436 10.67 0 12.432 0zM8.309 20c-1.058 0-1.833-.652-1.093-3.524l1.214-5.092c.211-.814.246-1.141 0-1.141-.317 0-1.689.562-2.502 1.117l-.528-.88c2.572-2.186 5.531-3.467 6.801-3.467 1.057 0 1.233 1.273.705 3.23l-1.391 5.352c-.246.945-.141 1.271.106 1.271.317 0 1.357-.392 2.379-1.207l.6.814C12.098 19.02 9.365 20 8.309 20z" />
-                            </svg>
-                            <p>Use the slider to show the number of deaths within a timeframe.</p>
-                        </div>
-                        <br />
-                        <div class="flex flex-row">
-                            <div id="selectedStartDate" class="text-xs align-middle inline-block"></div>
-                            <div id="slide3-slider"></div>
-                            <div id="selectedEndDate" class="text-xs align-middle"></div>
-                        </div>
-
-                    </div>
-
-                    <div class="w-1/2 flex flex-col">
+                <div class="section-chart">
+                    <div class="chart-container">
+                        <div class="axis-label-vertical">US State</div>
                         <div id="chart-6" class="chart-area"></div>
+                        <div class="axis-label-horizontal">Number of deaths</div>
                     </div>
                 </div>
+            </div>
         </div>
 
-        <div class="flex items-center bg-gray-500 text-white text-xs font-medium px-2 py-2 mt-5 rounded-lg"
-            role="alert">
-            <svg class="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+        <!-- ########## Footer ########## -->
+        <div class="alert_gray" role="alert">
+            <svg class="icon-filled" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                 <path
                     d="M12.432 0c1.34 0 2.01.912 2.01 1.957 0 1.305-1.164 2.512-2.679 2.512-1.269 0-2.009-.75-1.974-1.99C9.789 1.436 10.67 0 12.432 0zM8.309 20c-1.058 0-1.833-.652-1.093-3.524l1.214-5.092c.211-.814.246-1.141 0-1.141-.317 0-1.689.562-2.502 1.117l-.528-.88c2.572-2.186 5.531-3.467 6.801-3.467 1.057 0 1.233 1.273.705 3.23l-1.391 5.352c-.246.945-.141 1.271.106 1.271.317 0 1.357-.392 2.379-1.207l.6.814C12.098 19.02 9.365 20 8.309 20z" />
             </svg>
             <p>Hover over the chart bars to see details.</p>
         </div>
 
-
-        <div id="tooltip" role="tooltip"
-            class="opacity-0 absolute z-10 inline-block px-3 py-2 text-xs font-medium text-white bg-blue-900 rounded-lg shadow-xs">
+        <!-- ########## Tooltip Helper ########## -->
+        <div id="tooltip" role="tooltip" class="tooltip">
         </div>
-
     </div>
 
 </body>
