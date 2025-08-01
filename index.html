@@ -340,8 +340,8 @@
                 var parseDate = d3.timeParse("%Y-%m-%d");
                 var dateFormat = d3.timeFormat("%Y-%m-%d");
                 // TODO before upload
-                //data = await d3.csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/heads/master/rolling-averages/us-states.csv", d => {
-                data = await d3.csv("http://localhost:8000/us-states.csv", d => {
+                data = await d3.csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/heads/master/rolling-averages/us-states.csv", d => {
+                //data = await d3.csv("http://localhost:8000/us-states.csv", d => {
                     return {
                         date: dateFormat(parseDate(d.date)),
                         state: d.state,
